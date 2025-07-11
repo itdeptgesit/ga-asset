@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Daftar Aset GA</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+</head>
+<body class="bg-gray-100 text-gray-800 font-sans">
+  <div class="max-w-7xl mx-auto p-6">
+    <h1 class="text-3xl font-bold mb-6 text-center text-gray-800">📦 Daftar Aset GA</h1>
+
+    <div class="overflow-x-auto bg-white rounded-lg shadow border">
+      <table id="assetTable" class="min-w-full text-sm text-left">
+        <thead class="bg-gray-50 text-gray-700 sticky top-0 z-10">
+          <tr></tr>
+        </thead>
+        <tbody class="divide-y divide-gray-200"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    const sheetUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTI-SPAhj1XTcYOCFPZdkJwocC4Djmm0dsiocUNmQCEK5zsJLNKK7eBVN8Tdms1N0wafsq5bq71oh2A/pub?output=csv';
+
+    Papa.parse(sheetUrl, {
+      download: true,
+      header: true,
+      skipEmptyLines: true,
+      complete: results => renderTable(results.data),
+      error: err => console.error('Gagal memuat data:', err)
+    });
+
+    function renderTable(data) {
+      const table = document.getElementById('assetTable');
+      const thead = table.querySelector('thead tr');
+      const tbody = table.querySelector('tbody');
+      thead.innerHTML = '';
+      tbody.innerHTML = '';
+
+      if (data.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="100%" class="p-4 text-center text-gray-500">Tidak ada data.</td></tr>';
+        return;
+      }
+
+      // Header
+      const keys = Object.keys(data[0]);
+      keys.forEach(header => {
+        const th = document.createElement('th');
+        th.textContent = header;
+        th.className = 'px-4 py-3 border-b text-sm font-medium whitespace-nowrap';
+        thead.appendChild(th);
+      });
+
+      const thAction = document.createElement('th');
+      thAction.textContent = 'Aksi';
+      thAction.className = 'px-4 py-3 border-b text-sm font-medium';
+      thead.appendChild(thAction);
+
+      // Rows
+      data.forEach(row => {
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-gray-50 transition';
+
+        keys.forEach(key => {
+          const td = document.createElement('td');
+          td.textContent = row[key] || '';
+          td.className = 'px-4 py-2 whitespace-nowrap';
+          tr.appendChild(td);
+        });
+
+        // Aksi
+        const tdAction = document.createElement('td');
+        tdAction.className = 'px-4 py-2 whitespace-nowrap text-blue-600';
+
+        if (row.id && row.id.trim() !== '') {
+          tdAction.innerHTML = `<a href="view.html?id=${row.id}" title="Lihat Detail" class="hover:underline">🔍 Lihat</a>`;
+        } else {
+          tdAction.textContent = '-';
+        }
+
+        tr.appendChild(tdAction);
+        tbody.appendChild(tr);
+      });
+    }
+  </script>
+</body>
+</html>
