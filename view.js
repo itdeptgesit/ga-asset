@@ -1,4 +1,3 @@
-
   const urlParams = new URLSearchParams(window.location.search);
   const assetId = urlParams.get("id");
 
@@ -85,25 +84,18 @@
           </div>
 
           <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 text-sm">
-            ${
-              [
-                ["User Assigned", asset["User Assigned"]],
-                ["Category", asset["Category"]],
-                ["Brand", asset["Brand"]],
-                ["Plat No", asset["Plat No"]],
-                ["Brand Type", asset["Brand Type"]],
-                ["Entitas", asset["Entitas"]],
-                ["Status", asset["Status"]],
-                ["Location", asset["Location"]],
-                ["Department", asset["Department"]],
-                ["Condition", asset["Condition"]],
-                ["Condition Remark", asset["Condition Remark"]],
-                ["Purchase Date", formatDate(asset["Purchase Date"])]
-              ]
-              .filter(([_, value]) => value && value.toString().trim() !== "" && value !== "-")
-              .map(([label, value]) => renderItem(label, value))
-              .join("")
-            }
+            ${renderItem("User Assigned", asset["User Assigned"])}
+            ${renderItem("Category", asset["Category"])}
+            ${renderItem("Brand", asset["Brand"])}
+            ${renderItem("Plat No", asset["Plat No"])}
+            ${renderItem("Brand Type", asset["Brand Type"])}
+            ${renderItem("Entitas", asset["Entitas"])}
+            ${renderItem("Status", asset["Status"])}
+            ${renderItem("Location", asset["Location"])}
+            ${renderItem("Department", asset["Department"])}
+            ${renderItem("Condition", asset["Condition"])}
+            ${renderItem("Condition Remark", asset["Condition Remark"])}
+            ${renderItem("Purchase Date", formatDate(asset["Purchase Date"]))}
           </div>
         </div>
       `;
@@ -114,4 +106,5 @@
   }
 
   fetchAsset();
+
 
