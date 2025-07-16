@@ -1,4 +1,5 @@
- const urlParams = new URLSearchParams(window.location.search);
+
+  const urlParams = new URLSearchParams(window.location.search);
   const assetId = urlParams.get("id");
 
   const sheetUrl =
@@ -20,26 +21,27 @@
 
   function getIcon(label) {
     const icons = {
-      "User Assigned": "👤",
-      "Category": "🗂️",
-      "Brand": "🏷️",
-      "Plat No": "🚘",
-      "Brand Type": "🔧",
-      "Entitas": "🏢",
-      "Status": "✅",
-      "Location": "📍",
-      "Department": "👥",
-      "Condition": "🛠️",
-      "Condition Remark": "📝",
-      "Purchase Date": "🗓️"
+      "User Assigned": "user",
+      "Category": "folder",
+      "Brand": "tag",
+      "Plat No": "car",
+      "Brand Type": "settings",
+      "Entitas": "building",
+      "Status": "check-circle",
+      "Location": "map-pin",
+      "Department": "users",
+      "Condition": "wrench",
+      "Condition Remark": "file-text",
+      "Purchase Date": "calendar"
     };
-    return icons[label] || "•";
+    const iconName = icons[label] || "circle";
+    return `<i data-lucide="${iconName}" class="w-5 h-5 text-gray-600"></i>`;
   }
 
   function renderItem(label, value) {
     return `
       <div class="flex items-start gap-3 bg-gray-50 p-3 rounded-md shadow-sm">
-        <div class="mt-1 text-xl">${getIcon(label)}</div>
+        <div class="mt-1">${getIcon(label)}</div>
         <div>
           <p class="text-gray-600 text-xs uppercase font-semibold tracking-wide">${label}</p>
           <p class="text-gray-800 font-medium break-words">${value || "-"}</p>
@@ -111,6 +113,11 @@
           <p>&copy; ${new Date().getFullYear()} Gesit Asset. Built with ❤️ IT Gesit</p>
         </footer>
       `;
+
+      // Render Lucide icons
+      if (window.lucide?.createIcons) {
+        window.lucide.createIcons();
+      }
     } catch (err) {
       console.error(err);
       container.innerHTML = `<p class="text-red-500 text-center">Gagal memuat data: ${err.message}</p>`;
