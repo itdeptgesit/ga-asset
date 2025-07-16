@@ -18,6 +18,12 @@
 
   <!-- Bypass cache for JS file with timestamp -->
   <script defer src="view.js?v=<?=Date.now()?>"></script>
+  <script type="module">
+  import { createIcons } from "https://cdn.jsdelivr.net/npm/lucide@latest/+esm";
+  window.lucideReady = () => {
+    createIcons();
+  };
+</script>
 </head>
 <body class="bg-gray-50 p-6 font-sans text-gray-900">
   <div id="app" class="max-w-4xl mx-auto px-4 py-10">
