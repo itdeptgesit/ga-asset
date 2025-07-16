@@ -74,7 +74,7 @@ const urlParams = new URLSearchParams(window.location.search);
 
       container.innerHTML = `
         <div class="mb-6 text-center">
-          <h1 class="text-3xl font-bold text-gray-800">GA Asset Detail</h1>
+          <h1 class="text-3xl font-bold text-gray-800">Asset Detail</h1>
         </div>
 
         <div class="bg-white rounded-2xl shadow-lg border border-gray-200 p-6 space-y-6">
