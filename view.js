@@ -1,4 +1,4 @@
-const urlParams = new URLSearchParams(window.location.search);
+ const urlParams = new URLSearchParams(window.location.search);
   const assetId = urlParams.get("id");
 
   const sheetUrl =
@@ -105,6 +105,11 @@ const urlParams = new URLSearchParams(window.location.search);
             }
           </div>
         </div>
+
+        <footer class="mt-12 text-center text-sm text-gray-400">
+          <hr class="my-6 border-gray-200">
+          <p>&copy; ${new Date().getFullYear()} Gesit Asset. Built with ❤️ IT Gesit</p>
+        </footer>
       `;
     } catch (err) {
       console.error(err);
