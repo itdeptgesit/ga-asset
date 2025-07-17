@@ -1,33 +1,149 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="id">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Asset Detail</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Detail Aset</title>
 
-  <!-- Tailwind -->
-  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icon CDN -->
+  <script src="https://unpkg.com/lucide@latest"></script>
 
-  <!-- PapaParse -->
+  <!-- PapaParse CDN -->
   <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
 
-  <!-- Prevent Browser Caching -->
-  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
-  <meta http-equiv="Pragma" content="no-cache" />
-  <meta http-equiv="Expires" content="0" />
-
-  <!-- Bypass cache for JS file with timestamp -->
-  <script defer src="view.js?v=<?=Date.now()?>"></script>
-  <script type="module">
-  import { createIcons } from "https://cdn.jsdelivr.net/npm/lucide@latest/+esm";
-  window.lucideReady = () => {
-    createIcons();
-  };
-</script>
+  <!-- TailwindCSS (opsional, sesuaikan dengan kebutuhan desain) -->
+  <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-gray-50 p-6 font-sans text-gray-900">
-  <div id="app" class="max-w-4xl mx-auto px-4 py-10">
-    <p class="text-center text-gray-500">Loading asset data...</p>
-  </div>
+<body class="bg-gray-100 p-6">
+  <div id="app" class="max-w-3xl mx-auto"></div>
+
+  <script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const assetId = urlParams.get("id");
+
+    const sheetUrl =
+      "https://docs.google.com/spreadsheets/d/e/2PACX-1vTI-SPAhj1XTcYOCFPZdkJwocC4Djmm0dsiocUNmQCEK5zsJLNKK7eBVN8Tdms1N0wafsq5bq71oh2A/pub?output=csv";
+
+    function formatDate(dateStr) {
+      if (!dateStr) return "-";
+      try {
+        const date = new Date(dateStr);
+        return date.toLocaleDateString("id-ID", {
+          day: "2-digit",
+          month: "short",
+          year: "numeric",
+        });
+      } catch {
+        return "-";
+      }
+    }
+
+    function getIcon(label) {
+      const icons = {
+        "User Assigned": "user",
+        "Category": "folder",
+        "Brand": "tag",
+        "Plat No": "car",
+        "Brand Type": "settings",
+        "Entitas": "building",
+        "Status": "check-circle",
+        "Location": "map-pin",
+        "Department": "users",
+        "Condition": "wrench",
+        "Condition Remark": "file-text",
+        "Purchase Date": "calendar"
+      };
+      const iconName = icons[label] || "circle";
+      return `<i data-lucide="${iconName}" class="w-5 h-5 text-gray-600"></i>`;
+    }
+
+    function renderItem(label, value) {
+      return `
+        <div class="flex items-start gap-3 bg-gray-50 p-3 rounded-md shadow-sm">
+          <div class="mt-1">${getIcon(label)}</div>
+          <div>
+            <p class="text-gray-600 text-xs uppercase font-semibold tracking-wide">${label}</p>
+            <p class="text-gray-800 font-medium break-words">${value || "-"}</p>
+          </div>
+        </div>
+      `;
+    }
+
+    async function fetchAsset() {
+      const container = document.getElementById("app");
+
+      if (!assetId) {
+        container.innerHTML = `<p class="text-center text-red-600 font-semibold">Asset ID tidak ditemukan di URL</p>`;
+        return;
+      }
+
+      try {
+        const res = await fetch(sheetUrl);
+        const csv = await res.text();
+
+        if (!window.Papa) {
+          throw new Error("PapaParse belum dimuat.");
+        }
+
+        const parsed = Papa.parse(csv, { header: true, skipEmptyLines: true });
+        const asset = parsed.data.find((a) => a.id?.trim() === assetId.trim());
+
+        if (!asset) {
+          container.innerHTML = `<p class="text-center text-red-600 font-semibold">Data aset dengan ID <code>${assetId}</code> tidak ditemukan.</p>`;
+          return;
+        }
+
+        container.innerHTML = `
+          <div class="mb-6 text-center">
+            <h1 class="text-3xl font-bold text-gray-800">Asset Detail</h1>
+          </div>
+
+          <div class="bg-white rounded-2xl shadow-lg border border-gray-200 p-6 space-y-6">
+            <div class="text-center space-y-1">
+              <p class="text-3xl md:text-4xl font-bold text-gray-900">${asset["Item Name"] || "-"}</p>
+              <p class="text-sm text-gray-500 font-mono">NO ID : ${asset["id"] || "-"}</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 text-sm">
+              ${
+                [
+                  ["User Assigned", asset["User Assigned"]],
+                  ["Category", asset["Category"]],
+                  ["Brand", asset["Brand"]],
+                  ["Plat No", asset["Plat No"]],
+                  ["Brand Type", asset["Brand Type"]],
+                  ["Entitas", asset["Entitas"]],
+                  ["Status", asset["Status"]],
+                  ["Location", asset["Location"]],
+                  ["Department", asset["Department"]],
+                  ["Condition", asset["Condition"]],
+                  ["Condition Remark", asset["Condition Remark"]],
+                  ["Purchase Date", asset["Purchase Date"] ? formatDate(asset["Purchase Date"]) : ""]
+                ]
+                .filter(([_, value]) => value && value.trim() !== "-" && value.trim() !== "")
+                .map(([label, value]) => renderItem(label, value))
+                .join("")
+              }
+            </div>
+          </div>
+
+          <footer class="mt-12 text-center text-sm text-gray-400">
+            <hr class="my-6 border-gray-200">
+            <p>&copy; ${new Date().getFullYear()} Gesit Asset. Built with ❤️ IT Gesit</p>
+          </footer>
+        `;
+
+        // Render ulang icon lucide
+        if (window.lucide?.createIcons) {
+          lucide.createIcons();
+        }
+      } catch (err) {
+        console.error(err);
+        container.innerHTML = `<p class="text-red-500 text-center">Gagal memuat data: ${err.message}</p>`;
+      }
+    }
+
+    document.addEventListener("DOMContentLoaded", fetchAsset);
+  </script>
 </body>
 </html>
