@@ -4,19 +4,26 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Daftar Aset GA</title>
+  
+  <!-- TailwindCSS -->
   <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- PapaParse -->
   <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+
+  <!-- Lucide (optional, jika ingin icon SVG) -->
+  <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 <body class="bg-gray-100 text-gray-800 font-sans">
-  <div class="max-w-7xl mx-auto p-6">
-    <h1 class="text-3xl font-bold mb-6 text-center text-gray-800">📦 Daftar Aset GA</h1>
+  <div class="max-w-7xl mx-auto px-6 py-8">
+    <h1 class="text-3xl font-bold mb-8 text-center text-gray-800">📦 Daftar Aset GA</h1>
 
-    <div class="overflow-x-auto bg-white rounded-lg shadow border">
-      <table id="assetTable" class="min-w-full text-sm text-left">
-        <thead class="bg-gray-50 text-gray-700 sticky top-0 z-10">
+    <div class="overflow-x-auto bg-white rounded-xl shadow border border-gray-200">
+      <table id="assetTable" class="min-w-full divide-y divide-gray-200 text-sm text-left">
+        <thead class="bg-gray-100 text-gray-700 sticky top-0 z-10">
           <tr></tr>
         </thead>
-        <tbody class="divide-y divide-gray-200"></tbody>
+        <tbody class="divide-y divide-gray-100 bg-white"></tbody>
       </table>
     </div>
   </div>
@@ -44,38 +51,43 @@
         return;
       }
 
-      // Header
       const keys = Object.keys(data[0]);
+
+      // Render header
       keys.forEach(header => {
         const th = document.createElement('th');
         th.textContent = header;
-        th.className = 'px-4 py-3 border-b text-sm font-medium whitespace-nowrap';
+        th.className = 'px-4 py-3 border-b font-semibold tracking-wide text-xs uppercase bg-gray-100';
         thead.appendChild(th);
       });
 
       const thAction = document.createElement('th');
       thAction.textContent = 'Aksi';
-      thAction.className = 'px-4 py-3 border-b text-sm font-medium';
+      thAction.className = 'px-4 py-3 border-b font-semibold tracking-wide text-xs uppercase bg-gray-100';
       thead.appendChild(thAction);
 
-      // Rows
-      data.forEach(row => {
+      // Render rows
+      data.forEach((row, index) => {
         const tr = document.createElement('tr');
-        tr.className = 'hover:bg-gray-50 transition';
+        tr.className = index % 2 === 0 ? 'bg-white hover:bg-gray-50 transition' : 'bg-gray-50 hover:bg-gray-100 transition';
 
         keys.forEach(key => {
           const td = document.createElement('td');
-          td.textContent = row[key] || '';
-          td.className = 'px-4 py-2 whitespace-nowrap';
+          td.textContent = row[key] || '-';
+          td.className = 'px-4 py-2 whitespace-nowrap text-gray-700';
           tr.appendChild(td);
         });
 
-        // Aksi
         const tdAction = document.createElement('td');
-        tdAction.className = 'px-4 py-2 whitespace-nowrap text-blue-600';
+        tdAction.className = 'px-4 py-2 whitespace-nowrap';
 
         if (row.id && row.id.trim() !== '') {
-          tdAction.innerHTML = `<a href="view.html?id=${row.id}" title="Lihat Detail" class="hover:underline">🔍 Lihat</a>`;
+          tdAction.innerHTML = `
+            <a href="view.html?id=${row.id}" title="Lihat Detail" 
+              class="inline-flex items-center gap-1 text-blue-600 hover:underline text-sm font-medium">
+              <i data-lucide="eye" class="w-4 h-4"></i> Lihat
+            </a>
+          `;
         } else {
           tdAction.textContent = '-';
         }
@@ -83,6 +95,11 @@
         tr.appendChild(tdAction);
         tbody.appendChild(tr);
       });
+
+      // Aktifkan icon lucide jika tersedia
+      if (window.lucide?.createIcons) {
+        lucide.createIcons();
+      }
     }
   </script>
 </body>
