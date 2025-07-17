@@ -4,19 +4,25 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Daftar Aset GA</title>
-  
-  <!-- TailwindCSS -->
+
+  <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
-  
+
   <!-- PapaParse -->
   <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
 
-  <!-- Lucide (optional, jika ingin icon SVG) -->
+  <!-- Lucide Icon (optional) -->
   <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 <body class="bg-gray-100 text-gray-800 font-sans">
   <div class="max-w-7xl mx-auto px-6 py-8">
-    <h1 class="text-3xl font-bold mb-8 text-center text-gray-800">📦 Daftar Aset GA</h1>
+    <h1 class="text-3xl font-bold mb-6 text-center text-gray-800">📦 Daftar Aset GA</h1>
+
+    <!-- Search -->
+    <div class="mb-4">
+      <input type="text" id="searchInput" placeholder="🔍 Cari aset..." 
+             class="w-full px-4 py-2 border rounded-lg shadow-sm focus:outline-none focus:ring focus:border-blue-300 bg-white text-sm" />
+    </div>
 
     <div class="overflow-x-auto bg-white rounded-xl shadow border border-gray-200">
       <table id="assetTable" class="min-w-full divide-y divide-gray-200 text-sm text-left">
@@ -31,11 +37,20 @@
   <script>
     const sheetUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTI-SPAhj1XTcYOCFPZdkJwocC4Djmm0dsiocUNmQCEK5zsJLNKK7eBVN8Tdms1N0wafsq5bq71oh2A/pub?output=csv';
 
+    let fullData = [];
+
     Papa.parse(sheetUrl, {
       download: true,
       header: true,
       skipEmptyLines: true,
-      complete: results => renderTable(results.data),
+      complete: results => {
+        // Filter kolom yang tidak diinginkan
+        fullData = results.data.map(row => {
+          const { Timestamp, qr_link, qr_code_image, ...rest } = row;
+          return rest;
+        });
+        renderTable(fullData);
+      },
       error: err => console.error('Gagal memuat data:', err)
     });
 
@@ -51,10 +66,12 @@
         return;
       }
 
+      // Reorder: letakkan id di awal
       const keys = Object.keys(data[0]);
+      const reorderedKeys = ['id', ...keys.filter(k => k !== 'id')];
 
       // Render header
-      keys.forEach(header => {
+      reorderedKeys.forEach(header => {
         const th = document.createElement('th');
         th.textContent = header;
         th.className = 'px-4 py-3 border-b font-semibold tracking-wide text-xs uppercase bg-gray-100';
@@ -71,7 +88,7 @@
         const tr = document.createElement('tr');
         tr.className = index % 2 === 0 ? 'bg-white hover:bg-gray-50 transition' : 'bg-gray-50 hover:bg-gray-100 transition';
 
-        keys.forEach(key => {
+        reorderedKeys.forEach(key => {
           const td = document.createElement('td');
           td.textContent = row[key] || '-';
           td.className = 'px-4 py-2 whitespace-nowrap text-gray-700';
@@ -83,11 +100,10 @@
 
         if (row.id && row.id.trim() !== '') {
           tdAction.innerHTML = `
-            <a href="view.html?id=${row.id}" title="Lihat Detail" 
-              class="inline-flex items-center gap-1 text-blue-600 hover:underline text-sm font-medium">
+            <a href="view.html?id=${row.id}" title="Lihat Detail"
+               class="inline-flex items-center gap-1 text-blue-600 hover:underline text-sm font-medium">
               <i data-lucide="eye" class="w-4 h-4"></i> Lihat
-            </a>
-          `;
+            </a>`;
         } else {
           tdAction.textContent = '-';
         }
@@ -96,11 +112,19 @@
         tbody.appendChild(tr);
       });
 
-      // Aktifkan icon lucide jika tersedia
-      if (window.lucide?.createIcons) {
-        lucide.createIcons();
-      }
+      if (window.lucide?.createIcons) lucide.createIcons();
     }
+
+    // Search logic
+    document.getElementById('searchInput').addEventListener('input', function (e) {
+      const keyword = e.target.value.toLowerCase();
+      const filtered = fullData.filter(row =>
+        Object.values(row).some(value =>
+          (value || '').toLowerCase().includes(keyword)
+        )
+      );
+      renderTable(filtered);
+    });
   </script>
 </body>
 </html>
