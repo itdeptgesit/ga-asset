@@ -18,13 +18,18 @@
   <div class="max-w-7xl mx-auto px-6 py-8">
     <h1 class="text-3xl font-bold mb-6 text-center text-gray-800">📦 Daftar Aset GA</h1>
 
-    <!-- Search Input -->
-    <div class="mb-4">
+    <!-- Search + Tambah Aset -->
+    <div class="flex items-center justify-between mb-4 flex-wrap gap-2">
       <input type="text" id="searchInput" placeholder="🔍 Cari aset..."
-        class="w-full px-4 py-2 border rounded-lg shadow-sm focus:outline-none focus:ring focus:border-blue-300 bg-white text-sm" />
+        class="w-full sm:w-auto flex-1 px-4 py-2 border rounded-lg shadow-sm focus:outline-none focus:ring focus:border-blue-300 bg-white text-sm" />
+
+      <a href="https://forms.gle/A7dVQx2bsCvvzitG6" target="_blank"
+         class="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-4 py-2 rounded-lg shadow transition">
+        <i data-lucide="plus" class="w-4 h-4"></i> Tambah Aset
+      </a>
     </div>
 
-    <!-- Table Container -->
+    <!-- Table -->
     <div class="overflow-auto rounded-xl shadow border border-gray-200 bg-white">
       <table id="assetTable" class="min-w-full text-sm text-left divide-y divide-gray-200">
         <thead class="bg-gray-100 text-gray-700 sticky top-0 z-10">
@@ -61,25 +66,24 @@
     let currentPage = 1;
     let rowsPerPage = 10;
 
-    // Parse CSV
     Papa.parse(sheetUrl, {
       download: true,
       header: true,
       skipEmptyLines: true,
       complete: results => {
         fullData = results.data.map(row => {
-          const { Timestamp, qr_link, qr_code_image, ...cleaned } = row;
-          return cleaned;
+          const { Timestamp, qr_link, qr_code_image, ...rest } = row;
+          return rest;
         });
         filteredData = [...fullData];
         renderTable();
-      }
+      },
+      error: err => console.error('Gagal memuat data:', err)
     });
 
     function getPaginatedData() {
       const start = (currentPage - 1) * rowsPerPage;
-      const end = start + rowsPerPage;
-      return filteredData.slice(start, end);
+      return filteredData.slice(start, start + rowsPerPage);
     }
 
     function renderTable() {
@@ -97,7 +101,6 @@
       const keys = Object.keys(filteredData[0]);
       const reorderedKeys = ['id', ...keys.filter(k => k !== 'id')];
 
-      // Render header
       reorderedKeys.forEach(header => {
         const th = document.createElement('th');
         th.textContent = header;
@@ -110,7 +113,6 @@
       thAction.className = 'px-4 py-3 border-b font-semibold tracking-wide text-xs uppercase bg-gray-100';
       thead.appendChild(thAction);
 
-      // Render rows
       getPaginatedData().forEach((row, index) => {
         const tr = document.createElement('tr');
         tr.className = index % 2 === 0 ? 'bg-white hover:bg-gray-50 transition' : 'bg-gray-50 hover:bg-gray-100 transition';
@@ -141,11 +143,8 @@
 
       if (window.lucide?.createIcons) lucide.createIcons();
 
-      // Update page info
       const totalPages = Math.ceil(filteredData.length / rowsPerPage);
       document.getElementById('pageInfo').textContent = `Halaman ${currentPage} dari ${totalPages}`;
-
-      // Disable/Enable buttons
       document.getElementById('prevPage').disabled = currentPage === 1;
       document.getElementById('nextPage').disabled = currentPage === totalPages;
     }
