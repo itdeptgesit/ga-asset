@@ -11,26 +11,45 @@
   <!-- PapaParse -->
   <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
 
-  <!-- Lucide Icon (optional) -->
+  <!-- Lucide Icons -->
   <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 <body class="bg-gray-100 text-gray-800 font-sans">
   <div class="max-w-7xl mx-auto px-6 py-8">
     <h1 class="text-3xl font-bold mb-6 text-center text-gray-800">📦 Daftar Aset GA</h1>
 
-    <!-- Search -->
+    <!-- Search Input -->
     <div class="mb-4">
-      <input type="text" id="searchInput" placeholder="🔍 Cari aset..." 
-             class="w-full px-4 py-2 border rounded-lg shadow-sm focus:outline-none focus:ring focus:border-blue-300 bg-white text-sm" />
+      <input type="text" id="searchInput" placeholder="🔍 Cari aset..."
+        class="w-full px-4 py-2 border rounded-lg shadow-sm focus:outline-none focus:ring focus:border-blue-300 bg-white text-sm" />
     </div>
 
-    <div class="overflow-x-auto bg-white rounded-xl shadow border border-gray-200">
-      <table id="assetTable" class="min-w-full divide-y divide-gray-200 text-sm text-left">
+    <!-- Table Container -->
+    <div class="overflow-auto rounded-xl shadow border border-gray-200 bg-white">
+      <table id="assetTable" class="min-w-full text-sm text-left divide-y divide-gray-200">
         <thead class="bg-gray-100 text-gray-700 sticky top-0 z-10">
           <tr></tr>
         </thead>
         <tbody class="divide-y divide-gray-100 bg-white"></tbody>
       </table>
+    </div>
+
+    <!-- Pagination Controls -->
+    <div class="mt-6 flex items-center justify-between text-sm">
+      <div class="flex items-center gap-2">
+        <label for="rowsPerPage" class="text-gray-600">Baris per halaman:</label>
+        <select id="rowsPerPage" class="border rounded px-2 py-1">
+          <option>5</option>
+          <option selected>10</option>
+          <option>25</option>
+          <option>50</option>
+        </select>
+      </div>
+      <div class="flex items-center gap-3">
+        <button id="prevPage" class="px-3 py-1 border rounded text-gray-600 hover:bg-gray-100">&larr; Prev</button>
+        <span id="pageInfo" class="text-gray-700"></span>
+        <button id="nextPage" class="px-3 py-1 border rounded text-gray-600 hover:bg-gray-100">Next &rarr;</button>
+      </div>
     </div>
   </div>
 
@@ -38,36 +57,44 @@
     const sheetUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTI-SPAhj1XTcYOCFPZdkJwocC4Djmm0dsiocUNmQCEK5zsJLNKK7eBVN8Tdms1N0wafsq5bq71oh2A/pub?output=csv';
 
     let fullData = [];
+    let filteredData = [];
+    let currentPage = 1;
+    let rowsPerPage = 10;
 
+    // Parse CSV
     Papa.parse(sheetUrl, {
       download: true,
       header: true,
       skipEmptyLines: true,
       complete: results => {
-        // Filter kolom yang tidak diinginkan
         fullData = results.data.map(row => {
-          const { Timestamp, qr_link, qr_code_image, ...rest } = row;
-          return rest;
+          const { Timestamp, qr_link, qr_code_image, ...cleaned } = row;
+          return cleaned;
         });
-        renderTable(fullData);
-      },
-      error: err => console.error('Gagal memuat data:', err)
+        filteredData = [...fullData];
+        renderTable();
+      }
     });
 
-    function renderTable(data) {
+    function getPaginatedData() {
+      const start = (currentPage - 1) * rowsPerPage;
+      const end = start + rowsPerPage;
+      return filteredData.slice(start, end);
+    }
+
+    function renderTable() {
       const table = document.getElementById('assetTable');
       const thead = table.querySelector('thead tr');
       const tbody = table.querySelector('tbody');
       thead.innerHTML = '';
       tbody.innerHTML = '';
 
-      if (data.length === 0) {
+      if (filteredData.length === 0) {
         tbody.innerHTML = '<tr><td colspan="100%" class="p-4 text-center text-gray-500">Tidak ada data.</td></tr>';
         return;
       }
 
-      // Reorder: letakkan id di awal
-      const keys = Object.keys(data[0]);
+      const keys = Object.keys(filteredData[0]);
       const reorderedKeys = ['id', ...keys.filter(k => k !== 'id')];
 
       // Render header
@@ -84,7 +111,7 @@
       thead.appendChild(thAction);
 
       // Render rows
-      data.forEach((row, index) => {
+      getPaginatedData().forEach((row, index) => {
         const tr = document.createElement('tr');
         tr.className = index % 2 === 0 ? 'bg-white hover:bg-gray-50 transition' : 'bg-gray-50 hover:bg-gray-100 transition';
 
@@ -101,7 +128,7 @@
         if (row.id && row.id.trim() !== '') {
           tdAction.innerHTML = `
             <a href="view.html?id=${row.id}" title="Lihat Detail"
-               class="inline-flex items-center gap-1 text-blue-600 hover:underline text-sm font-medium">
+              class="inline-flex items-center gap-1 text-blue-600 hover:underline text-sm font-medium">
               <i data-lucide="eye" class="w-4 h-4"></i> Lihat
             </a>`;
         } else {
@@ -113,17 +140,48 @@
       });
 
       if (window.lucide?.createIcons) lucide.createIcons();
+
+      // Update page info
+      const totalPages = Math.ceil(filteredData.length / rowsPerPage);
+      document.getElementById('pageInfo').textContent = `Halaman ${currentPage} dari ${totalPages}`;
+
+      // Disable/Enable buttons
+      document.getElementById('prevPage').disabled = currentPage === 1;
+      document.getElementById('nextPage').disabled = currentPage === totalPages;
     }
 
-    // Search logic
+    // Search
     document.getElementById('searchInput').addEventListener('input', function (e) {
       const keyword = e.target.value.toLowerCase();
-      const filtered = fullData.filter(row =>
+      filteredData = fullData.filter(row =>
         Object.values(row).some(value =>
           (value || '').toLowerCase().includes(keyword)
         )
       );
-      renderTable(filtered);
+      currentPage = 1;
+      renderTable();
+    });
+
+    // Pagination controls
+    document.getElementById('prevPage').addEventListener('click', () => {
+      if (currentPage > 1) {
+        currentPage--;
+        renderTable();
+      }
+    });
+
+    document.getElementById('nextPage').addEventListener('click', () => {
+      const totalPages = Math.ceil(filteredData.length / rowsPerPage);
+      if (currentPage < totalPages) {
+        currentPage++;
+        renderTable();
+      }
+    });
+
+    document.getElementById('rowsPerPage').addEventListener('change', function () {
+      rowsPerPage = parseInt(this.value);
+      currentPage = 1;
+      renderTable();
     });
   </script>
 </body>
